@@ -16,3 +16,7 @@ framework:
     #fragments: true
     php_errors:
         log: true
+
+when@dev:
+    framework:
+        http_cache: true
