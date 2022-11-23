@@ -35,6 +35,10 @@ class TwigEventSubscriber implements EventSubscriberInterface
         $this->twig->addGlobal('conferences', $this->conferenceRepository->findAll());
     }
 
+    /**
+     * @author Martin Seon
+     * @return array<string, string|array|\Symfony\Component\EventDispatcher\list<array>>
+     */
     public static function getSubscribedEvents()
     {
         return [

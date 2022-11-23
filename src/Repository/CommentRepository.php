@@ -7,6 +7,8 @@ use App\Entity\Conference;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * @method Comment|null find($id, $lockMode = null, $lockVersion = null)
@@ -23,6 +25,15 @@ class CommentRepository extends ServiceEntityRepository
         parent::__construct($registry, Comment::class);
     }
 
+    /**
+     * 
+     * @author Martin Seon
+     * @param Conference $conference 
+     * @param int $offset 
+     * @return Paginator 
+     * @throws InvalidArgumentException 
+     * @throws RuntimeException 
+     */
     public function getCommentPaginator(Conference $conference, int $offset): Paginator
     {
         $query = $this->createQueryBuilder('c')

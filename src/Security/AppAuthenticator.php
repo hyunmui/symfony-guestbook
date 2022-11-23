@@ -4,8 +4,14 @@ namespace App\Security;
 
 use App\Entity\Admin;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
+use Symfony\Component\HttpFoundation\Exception\SuspiciousOperationException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\Routing\Exception\MissingMandatoryParametersException;
+use Symfony\Component\Routing\Exception\InvalidParameterException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -39,12 +45,26 @@ class AppAuthenticator extends AbstractFormLoginAuthenticator implements Passwor
         $this->passwordEncoder = $passwordEncoder;
     }
 
+    /**
+     * 
+     * @author Martin Seon
+     * @param Request $request 
+     * @return bool 
+     * @throws SuspiciousOperationException 
+     */
     public function supports(Request $request)
     {
         return self::LOGIN_ROUTE === $request->attributes->get('_route')
             && $request->isMethod('POST');
     }
 
+    /**
+     * 
+     * @author Martin Seon
+     * @param Request $request 
+     * @return mixed 
+     * @throws SessionNotFoundException 
+     */
     public function getCredentials(Request $request)
     {
         $credentials = [
@@ -60,6 +80,15 @@ class AppAuthenticator extends AbstractFormLoginAuthenticator implements Passwor
         return $credentials;
     }
 
+    /**
+     * 
+     * @author Martin Seon
+     * @param mixed $credentials 
+     * @param UserProviderInterface $userProvider 
+     * @return UserInterface|null 
+     * @throws InvalidCsrfTokenException 
+     * @throws UsernameNotFoundException 
+     */
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
         $token = new CsrfToken('authenticate', $credentials['csrf_token']);
@@ -76,19 +105,42 @@ class AppAuthenticator extends AbstractFormLoginAuthenticator implements Passwor
         return $user;
     }
 
+    /**
+     * 
+     * @author Martin Seon
+     * @param mixed $credentials 
+     * @param UserInterface $user 
+     * @return bool 
+     */
     public function checkCredentials($credentials, UserInterface $user)
     {
         return $this->passwordEncoder->isPasswordValid($user, $credentials['password']);
     }
 
     /**
+     * 
      * Used to upgrade (rehash) the user's password automatically over time.
+     * @author Martin Seon
+     * @param mixed $credentials 
+     * @return null|string 
      */
     public function getPassword($credentials): ?string
     {
         return $credentials['password'];
     }
 
+    /**
+     * 
+     * @author Martin Seon
+     * @param Request $request 
+     * @param TokenInterface $token 
+     * @param string $providerKey 
+     * @return Response|null 
+     * @throws SessionNotFoundException 
+     * @throws RouteNotFoundException 
+     * @throws MissingMandatoryParametersException 
+     * @throws InvalidParameterException 
+     */
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $providerKey)
     {
         if ($targetPath = $this->getTargetPath($request->getSession(), $providerKey)) {
@@ -98,6 +150,14 @@ class AppAuthenticator extends AbstractFormLoginAuthenticator implements Passwor
         return new RedirectResponse($this->urlGenerator->generate('admin'));
     }
 
+    /**
+     * 
+     * @author Martin Seon
+     * @return string 
+     * @throws RouteNotFoundException 
+     * @throws MissingMandatoryParametersException 
+     * @throws InvalidParameterException 
+     */
     protected function getLoginUrl()
     {
         return $this->urlGenerator->generate(self::LOGIN_ROUTE);

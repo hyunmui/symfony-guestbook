@@ -6,7 +6,7 @@
   <h2>{{ conference }} Conference</h2>
 
   {% if comments|length > 0 %}
-    <div>There are {{ comments|length }} comments.</div>
+    <div>There are {{ comments|length }} comments</div>
 
     {% for comment in comments %}
       <img src="{{ asset('uploads/photos/' ~ comment.photofilename) }}" alt="picture">
