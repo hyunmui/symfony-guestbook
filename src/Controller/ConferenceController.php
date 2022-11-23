@@ -10,11 +10,13 @@ use App\Repository\CommentRepository;
 use App\Repository\ConferenceRepository;
 use App\SpamChecker;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Twig\Mime\NotificationEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Twig\Environment;
@@ -118,5 +120,28 @@ class ConferenceController extends AbstractController
             'next' => min(count($paginator), $offset + CommentRepository::PAGINATOR_PER_PAGE),
             'comment_form' => $form->createView(),
         ]));
+    }
+
+    /**
+     * @Route("/comment/test/{commentId}", name="commment_test")
+     */
+    public function test(
+        int $commentId,
+        CommentRepository $commentRepository,
+        MailerInterface $mailer,
+        string $adminEmail
+    ): Response {
+        /** @var Comment */
+        $comment = $commentRepository->findOneBy(['id' => $commentId]);
+        dump($comment);
+        $mailer->send((new NotificationEmail())
+            ->subject('New comment posted')
+            ->htmlTemplate('emails/comment_notification.html.twig')
+            ->from($adminEmail)
+            ->to($adminEmail)
+            ->context(['comment' => $comment]));
+
+        // return new Response('Test Completed');
+        return $this->render('index.html.twig');
     }
 }

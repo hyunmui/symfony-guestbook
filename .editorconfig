@@ -1,0 +1,8 @@
+[*]
+tab_width = 4
+indent_size = 4
+indent_style = space
+
+[*.twig]
+tab_width = 2
+indent_size = 2

@@ -43,9 +43,9 @@ class Comment
     private $photoFilename;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=255, nullable=true, options={"default":"submitted" })
      */
-    private $state;
+    private $state = 'submitted';
 
     /**
      * @ORM\ManyToOne(targetEntity=Conference::class, inversedBy="comments")
