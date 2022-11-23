@@ -18,6 +18,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\SyntaxError;
+use Twig\Error\RuntimeError;
 
 class ConferenceController extends AbstractController
 {
@@ -52,7 +55,12 @@ class ConferenceController extends AbstractController
         $this->bus = $bus;
     }
 
-    #[Route('/', name: 'homepage')]
+
+    /**
+     * 
+     * @Route("/", name="homepage")
+     * @author Martin Seon
+     */
     public function index(ConferenceRepository $conferenceRepository): Response
     {
         return new Response($this->twig->render('conference/index.html.twig', [
@@ -60,7 +68,11 @@ class ConferenceController extends AbstractController
         ]));
     }
 
-    #[Route('/conference/{slug}', name: 'conference')]
+    /**
+     * 
+     * @Route("/conference/{slug}", name="conference")
+     * @author Martin Seon
+     */
     public function show(
         Request $request,
         Conference $conference,

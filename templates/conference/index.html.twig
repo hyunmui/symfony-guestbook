@@ -1,12 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello ConferenceController!{% endblock %}
+{% block title %}
+	Hello ConferenceController!
+{% endblock %}
 
 {% block body %}
-    <h2>Give your feedback!</h2>
+	<h2>Give your feedback!</h2>
 
-    {% for conference in conferences %}
-        <h4>{{ conference }}</h4>
-        <p><a href="{{ path('conference', { slug: conference.slug }) }}">View</a></p>
-    {% endfor %}
+	{% for conference in conferences %}
+		<h4>{{ conference }}</h4>
+		<p>
+			<a href="{{ path('conference', { slug: conference.slug }) }}">View</a>
+		</p>
+	{% endfor %}
 {% endblock %}
