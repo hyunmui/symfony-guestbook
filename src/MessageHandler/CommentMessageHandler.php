@@ -67,6 +67,8 @@ class CommentMessageHandler implements MessageHandlerInterface
             }
             $this->workflow->apply($comment, $transition);
             $this->entityManager->flush();
+
+            $this->bus->dispatch($message);
         } elseif ($this->workflow->can($comment, 'publish') || $this->workflow->can($comment, 'publish_ham')) {
             $this->mailer->send((new NotificationEmail())
                     ->subject('New comment posted')
