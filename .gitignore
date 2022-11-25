@@ -309,10 +309,13 @@ $RECYCLE.BIN/
 # and uncomment the following lines
 # .pnp.*
 
-# End of https://www.toptal.com/developers/gitignore/api/yarn,macos,linux,windows,symfony,visualstudiocode,node
 ###> symfony/webpack-encore-bundle ###
 /node_modules/
 /public/build/
 npm-debug.log
 yarn-error.log
 ###< symfony/webpack-encore-bundle ###
+
+uploads
+
+# End of https://www.toptal.com/developers/gitignore/api/yarn,macos,linux,windows,symfony,visualstudiocode,node

@@ -97,7 +97,7 @@ class ConferenceController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $comment->setConference($conference);
             if ($photo = $form->get('photo')->getData()) {
-                $filename = bin2hex(random_bytes(6) . '.' . $photo->guessExtension());
+                $filename = bin2hex(random_bytes(6)) . '.' . $photo->guessExtension();
                 try {
                     $photo->move($photoDir, $filename);
                 } catch (FileException $e) {
