@@ -6,18 +6,13 @@ use App\Entity\Comment;
 use App\Entity\Conference;
 use App\Form\CommentFormType;
 use App\Message\CommentMessage;
-use App\Notification\CommentReviewNotification;
 use App\Repository\CommentRepository;
 use App\Repository\ConferenceRepository;
-use App\SpamChecker;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bridge\Twig\Mime\NotificationEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Notifier\Notification\Notification;
 use Symfony\Component\Notifier\Notifier;
@@ -25,18 +20,9 @@ use Symfony\Component\Notifier\NotifierInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Environment;
-use Twig\Error\LoaderError;
-use Twig\Error\SyntaxError;
-use Twig\Error\RuntimeError;
 
 class ConferenceController extends AbstractController
 {
-    /**
-     * 
-     * @var Environment
-     */
-    private $twig;
-
     /**
      * 
      * @var EntityManagerInterface
@@ -52,12 +38,12 @@ class ConferenceController extends AbstractController
     /**
      * 
      * @author Martin Seon
-     * @param Environment $twig 
+     * @param EntityManagerInterface $entityManager 
+     * @param MessageBusInterface $bus 
      * @return void 
      */
-    public function __construct(Environment $twig, EntityManagerInterface $entityManager, MessageBusInterface $bus)
+    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $bus)
     {
-        $this->twig = $twig;
         $this->entityManager = $entityManager;
         $this->bus = $bus;
     }
@@ -70,9 +56,9 @@ class ConferenceController extends AbstractController
      */
     public function index(ConferenceRepository $conferenceRepository): Response
     {
-        return (new Response($this->twig->render('conference/index.html.twig', [
+        return $this->render('conference/index.html.twig', [
             'conferences' => $conferenceRepository->findAll(),
-        ])))->setSharedMaxAge(3600);
+        ])->setSharedMaxAge(3600);
     }
 
     /**
@@ -80,9 +66,9 @@ class ConferenceController extends AbstractController
      */
     public function conferenceHeader(ConferenceRepository $conferenceRepository): Response
     {
-        return ($this->render('conference/header.html.twig', [
+        return $this->render('conference/header.html.twig', [
             'conferences' => $conferenceRepository->findAll()
-        ]))->setSharedMaxAge(3600);
+        ])->setSharedMaxAge(3600);
     }
 
     /**
@@ -147,37 +133,24 @@ class ConferenceController extends AbstractController
         $offset = max(0, $request->query->getInt('offset', 0));
         $paginator = $commentRepository->getCommentPaginator($conference, $offset);
 
-        return new Response($this->twig->render('conference/show.html.twig', [
+        return $this->render('conference/show.html.twig', [
             'conference' => $conference,
             'comments' => $paginator,
             'previous' => $offset - CommentRepository::PAGINATOR_PER_PAGE,
             'next' => min(count($paginator), $offset + CommentRepository::PAGINATOR_PER_PAGE),
             'comment_form' => $form->createView(),
-        ]));
+        ]);
     }
 
     /**
-     * @Route("/comment/test/{commentId}", name="commment_test")
+     * @Route("/comment/test", name="commment_test")
      * 
      * @param Notifier $notifier
      */
     public function test(
-        int $commentId,
-        CommentRepository $commentRepository,
-        NotifierInterface $notifier
+        ConferenceRepository $conferenceRepository
     ): Response {
-        /** @var Comment */
-        $comment = $commentRepository->findOneBy(['id' => $commentId]);
-        $reviewUrl = $this->generateUrl(
-            'review_comment',
-            ['id' => $comment->getId()],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
-        $message = new CommentMessage($comment->getId(), $reviewUrl);
-        dump($message, $reviewUrl, $notifier->getAdminRecipients());
-        $notification = new CommentReviewNotification($comment, $message->getReviewUrl());
-        $notifier->send($notification, ...$notifier->getAdminRecipients());
-
+        dump($conferenceRepository->findAll());
 
         // return new Response('Test Completed');
         return $this->render('index.html.twig');
