@@ -6,6 +6,7 @@ use App\Entity\Comment;
 use App\Entity\Conference;
 use App\Form\CommentFormType;
 use App\Message\CommentMessage;
+use App\Notification\CommentReviewNotification;
 use App\Repository\CommentRepository;
 use App\Repository\ConferenceRepository;
 use App\SpamChecker;
@@ -19,8 +20,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Notifier\Notification\Notification;
+use Symfony\Component\Notifier\Notifier;
 use Symfony\Component\Notifier\NotifierInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
@@ -118,7 +121,13 @@ class ConferenceController extends AbstractController
                 'referrer' => $request->headers->get('referrer'),
                 'permalink' => $request->getUri(),
             ];
-            $this->bus->dispatch(new CommentMessage($comment->getId(), $context));
+
+            $reviewUrl = $this->generateUrl(
+                'review_comment',
+                ['id' => $comment->getId()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+            $this->bus->dispatch(new CommentMessage($comment->getId(), $reviewUrl, $context));
 
             $notifier->send(new Notification(
                 'Thank you for the feedback; your comment will be after moderation.',
@@ -149,22 +158,26 @@ class ConferenceController extends AbstractController
 
     /**
      * @Route("/comment/test/{commentId}", name="commment_test")
+     * 
+     * @param Notifier $notifier
      */
     public function test(
         int $commentId,
         CommentRepository $commentRepository,
-        MailerInterface $mailer,
-        string $adminEmail
+        NotifierInterface $notifier
     ): Response {
         /** @var Comment */
         $comment = $commentRepository->findOneBy(['id' => $commentId]);
-        dump($comment);
-        $mailer->send((new NotificationEmail())
-            ->subject('New comment posted')
-            ->htmlTemplate('emails/comment_notification.html.twig')
-            ->from($adminEmail)
-            ->to($adminEmail)
-            ->context(['comment' => $comment]));
+        $reviewUrl = $this->generateUrl(
+            'review_comment',
+            ['id' => $comment->getId()],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+        $message = new CommentMessage($comment->getId(), $reviewUrl);
+        dump($message, $reviewUrl, $notifier->getAdminRecipients());
+        $notification = new CommentReviewNotification($comment, $message->getReviewUrl());
+        $notifier->send($notification, ...$notifier->getAdminRecipients());
+
 
         // return new Response('Test Completed');
         return $this->render('index.html.twig');

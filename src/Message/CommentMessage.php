@@ -11,11 +11,13 @@ namespace App\Message;
 class CommentMessage
 {
     private $id;
+    private $reviewUrl;
     private $context;
 
-    public function __construct(int $id, array $context = [])
+    public function __construct(int $id, string $reviewUrl, array $context = [])
     {
         $this->id = $id;
+        $this->reviewUrl = $reviewUrl;
         $this->context = $context;
     }
 
@@ -33,6 +35,14 @@ class CommentMessage
     public function getContext(): array
     {
         return $this->context;
+    }
+
+    /**
+     * Get the value of reviewUrl
+     */
+    public function getReviewUrl()
+    {
+        return $this->reviewUrl;
     }
 }
 

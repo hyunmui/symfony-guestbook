@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Comment;
 use App\Message\CommentMessage;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,6 +13,7 @@ use Symfony\Component\HttpKernel\HttpCache\StoreInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Workflow\Registry;
 
 /**
@@ -22,11 +24,13 @@ class AdminController extends AbstractController
 {
     private $entityManager;
     private $bus;
+    private $logger;
 
-    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $bus)
+    public function __construct(EntityManagerInterface $entityManager, MessageBusInterface $bus, LoggerInterface $logger)
     {
         $this->entityManager = $entityManager;
         $this->bus = $bus;
+        $this->logger = $logger;
     }
 
 
@@ -50,7 +54,12 @@ class AdminController extends AbstractController
         $this->entityManager->flush();
 
         if ($accepted) {
-            $this->bus->dispatch(new CommentMessage($comment->getId()));
+            $reviewUrl = $this->generateUrl(
+                'review_comment',
+                ['id' => $comment->getId()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+            $this->bus->dispatch(new CommentMessage($comment->getId(), $reviewUrl));
         }
 
         return $this->render('admin/review.html.twig', [
